@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "satis.fullname" . }}
+  labels:
+    {{- include "satis.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "satis.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "satis.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "satis.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SATIS_CONFIG_PATH
+              value: {{ .Values.satis.configPath | quote }}
+            - name: SATIS_OUTPUT_PATH
+              value: {{ .Values.satis.outputPath | quote }}
+            - name: FORCE_BUILD_ON_STARTUP
+              value: {{ .Values.satis.forceBuildOnStartup | quote }}
+            {{- if .Values.ingress.authUrl }}
+            - name: AUTH_URL
+              value: {{ .Values.ingress.authUrl | quote }}
+            {{- end }}
+            {{- if .Values.github.oauth.enabled }}
+            - name: COMPOSER_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "satis.fullname" . }}-github-oauth
+                  key: COMPOSER_AUTH
+                  optional: false
+            {{- end }}
+            {{- if .Values.webhook.enabled }}
+            - name: WEBHOOK_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "satis.fullname" . }}-webhook-secret
+                  key: authSecret
+            - name: REBUILD_COMMAND
+              value: {{ .Values.webhook.rebuildCommand | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+            {{- if .Values.webhook.enabled }}
+            - name: webhook
+              containerPort: 8080
+              protocol: TCP
+            {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: satis-data
+              mountPath: {{ .Values.satis.outputPath }}
+            {{- end }}
+            {{- if .Values.satis.configJson }}
+            - name: satis-config
+              mountPath: {{ .Values.satis.configPath }}
+              subPath: config.json
+              readOnly: true
+            {{- end }}
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: satis-data
+          persistentVolumeClaim:
+            claimName: {{ include "satis.fullname" . }}-data
+        {{- end }}
+        {{- if .Values.satis.configJson }}
+        - name: satis-config
+          configMap:
+            name: {{ include "satis.fullname" . }}-config
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

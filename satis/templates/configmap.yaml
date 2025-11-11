@@ -1,0 +1,12 @@
+{{- if .Values.satis.configJson }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "satis.fullname" . }}-config
+  labels:
+    {{- include "satis.labels" . | nindent 4 }}
+data:
+  config.json: |
+{{ .Values.satis.configJson | indent 4 }}
+{{- end }}
+
