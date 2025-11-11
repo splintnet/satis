@@ -48,6 +48,11 @@ if [ -z "$AUTH_URL" ]; then
     sed -i '/auth_request_set/d' /tmp/default.conf
     # Entferne den /auth location Block
     sed -i '/location = \/auth/,/^    }/d' /tmp/default.conf
+    # Entferne Header-Zeilen, die $user verwenden oder nur für Auth relevant sind
+    sed -i '/proxy_set_header X-License-Email/d' /tmp/default.conf
+    sed -i '/proxy_set_header X-Original-URI/d' /tmp/default.conf
+    sed -i '/proxy_set_header X-Forwarded-Host/d' /tmp/default.conf
+    sed -i '/proxy_set_header Authorization/d' /tmp/default.conf
 else
     echo "AUTH_URL is set to: $AUTH_URL"
 fi
