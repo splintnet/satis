@@ -40,11 +40,16 @@ envsubst '${AUTH_URL}' < /etc/nginx/conf.d/default.conf > /tmp/default.conf
 
 # Wenn AUTH_URL leer ist, entferne die auth_request Direktiven
 if [ -z "$AUTH_URL" ]; then
+    echo "AUTH_URL is empty, disabling auth_request..."
+    # Entferne die set $auth_url Zeile (wird zu ungültigem "set $auth_url ;" wenn leer)
+    sed -i '/set \$auth_url/d' /tmp/default.conf
     # Entferne auth_request und auth_request_set Zeilen
     sed -i '/auth_request/d' /tmp/default.conf
     sed -i '/auth_request_set/d' /tmp/default.conf
     # Entferne den /auth location Block
     sed -i '/location = \/auth/,/^    }/d' /tmp/default.conf
+else
+    echo "AUTH_URL is set to: $AUTH_URL"
 fi
 
 mv /tmp/default.conf /etc/nginx/conf.d/default.conf

@@ -15,11 +15,11 @@ releases:
           forceBuildOnStartup: true
           configJson: |
             {
-              "name": "my/composer-repository",
-              "description": "My Composer Repository",
-              "homepage": "https://repo.example.com",
+              "name": "splintnet/composer-repository",
+              "description": "Splintnet Composer Repository",
+              "homepage": "https://repo.splintnet.com",
               "repositories": [
-                { "type": "vcs", "url": "https://github.com/myorg/myrepo.git" }
+                { "type": "vcs", "url": "https://github.com/splintnet/crm.git" }
               ],
               "require-all": true
             }
