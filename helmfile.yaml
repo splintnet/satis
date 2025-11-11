@@ -1,6 +1,6 @@
 repositories:
   - name: satis
-    url: oci://ghcr.io/splintnet/satis/satis
+    url: ghcr.io/splintnet/satis
     oci: true
 
 releases:
