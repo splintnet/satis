@@ -1,0 +1,54 @@
+repositories:
+  - name: satis
+    url: oci://ghcr.io/splintnet/satis/satis
+    oci: true
+
+releases:
+  - name: satis
+    namespace: default
+    chart: satis/satis
+    version: 0.1.0
+    values:
+      - satis:
+          configPath: /build/config/satis.json
+          outputPath: /build/output
+          forceBuildOnStartup: true
+          configJson: |
+            {
+              "name": "my/composer-repository",
+              "description": "My Composer Repository",
+              "homepage": "https://repo.example.com",
+              "repositories": [
+                { "type": "vcs", "url": "https://github.com/myorg/myrepo.git" }
+              ],
+              "require-all": true
+            }
+
+      - persistence:
+          enabled: true
+          size: 2Gi
+          storageClass: ""
+
+      - ingress:
+          enabled: true
+          className: "nginx"
+          authUrl: "https://auth.example.com"
+          hosts:
+            - host: repo.example.com
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: repo-tls
+              hosts:
+                - repo.example.com
+
+      - webhook:
+          enabled: true
+          authSecret: "your-webhook-secret-here"
+          rebuildCommand: "/satis/bin/satis build /build/config/satis.json /build/output"
+
+      - github:
+          oauth:
+            enabled: false
+            token: ""

@@ -1,0 +1,9 @@
+satis/
+helm/
+helm_neu/
+.git/
+.gitignore
+*.md
+.DS_Store
+helmfile.yaml*
+

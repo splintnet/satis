@@ -6,6 +6,8 @@ on:
       - main
     tags:
       - "v*.*.*" # SemVer Tags wie v1.0.0, v1.2.3, etc.
+    paths:
+      - "src/**"
   workflow_dispatch:
 
 env:
@@ -43,13 +45,13 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix={{branch}}-,format=long,enable={{is_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./src
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
